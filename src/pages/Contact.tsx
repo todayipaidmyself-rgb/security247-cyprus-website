@@ -30,11 +30,24 @@ export default function Contact() {
     message: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real implementation, this would send to a backend
-    toast.success("Thank you! We'll contact you within 24 hours.");
-    setFormData({ name: "", email: "", phone: "", service: "", message: "" });
+    const payload = new FormData(e.currentTarget);
+    payload.set("source_page", window.location.pathname);
+    payload.set("lead_type", "website_enquiry");
+
+    try {
+      const res = await fetch("https://formspree.io/f/xkovwqwp", {
+        method: "POST",
+        body: payload,
+        headers: { Accept: "application/json" }
+      });
+      if (!res.ok) throw new Error("Request failed");
+      toast.success("Thank you! We'll contact you within 24 hours.");
+      setFormData({ name: "", email: "", phone: "", service: "", message: "" });
+    } catch (error) {
+      toast.error("There was a problem sending your message. Please try again.");
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -137,7 +150,12 @@ export default function Contact() {
                 Fill out the form below and our security experts will contact you within 24 hours to discuss your requirements.
               </p>
               
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                method="POST"
+                action="https://formspree.io/f/xkovwqwp"
+                onSubmit={handleSubmit}
+                className="space-y-6"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name *</Label>
                   <Input
